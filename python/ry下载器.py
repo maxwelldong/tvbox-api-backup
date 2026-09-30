@@ -433,7 +433,7 @@ def main():
             if used != url:
                 print(f"    actual: {used}")
         except Exception as e:
-            print(f"    fail: {e}  [skipped]")
+            print(f"    fail: {e}")
             results.append({"name": use_name or host, "url": url, "file": None, "ok": False, "error": str(e)})
             continue
 
@@ -471,13 +471,7 @@ def main():
     except Exception:
         pass
 
-    # 容忍部分失败：只要有任意一个成功就正常退出；全失败才报错
-    if ok_n == 0:
-        print("all links failed")
-        sys.exit(1)
-    if ok_n < len(results):
-        print(f"partial failure: {len(results) - ok_n} link(s) skipped (not fatal)")
-    sys.exit(0)
+    sys.exit(0 if ok_n == len(results) else 2)
 
 
 if __name__ == "__main__":

@@ -452,8 +452,7 @@ body.simple-mode #api-panel { display:block !important; }
 #about-panel > div { background:#f8fafc !important; border-radius:8px !important; padding:16px 18px !important; margin-bottom:14px !important; border:1px solid #e4ebf3 !important; }
 #about-panel h3 { font-size:.9rem !important; margin-bottom:10px !important; }
 #about-panel p, #about-panel li { font-size:.75rem !important; line-height:1.7 !important; }
-#about-panel > div > div:not(#about-domains-list) { background:#fff !important; border:1px solid #e4ebf3 !important; border-radius:50px !important; padding:8px 16px !important; margin-top:8px !important; }
-#about-domains-list { background:transparent !important; padding:0 !important; border:none !important; border-radius:0 !important; margin-top:0 !important; }
+#about-panel > div > div { background:#fff !important; border:1px solid #e4ebf3 !important; border-radius:50px !important; padding:8px 16px !important; margin-top:8px !important; }
 
 /* ===== 合作共创 ===== */
 .contributor-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; margin-top:12px; }
@@ -469,7 +468,6 @@ body.simple-mode #api-panel { display:block !important; }
 }
 .contributor-card.hidden { display:none !important; }
 
-/* 透明无边框隐形卡片：固定创作者信息内部布局 */
 .contributor-inner-card {
   display:flex;
   align-items:center;
@@ -653,18 +651,17 @@ const navTabs = document.getElementById('navTabs');
 const headerLogo = document.getElementById('header-logo');
 const headerSubtitle = document.getElementById('header-subtitle');
 
+/* ===== 点播/直播：写死域名与权重（按你刚贴的旧版逻辑） ===== */
 const API_DOMAINS = [
-  {tag:"备份一线", base:"https://0.wudaozhe.net/tvbox/"},
-  {tag:"备份二线", base:"https://0.12yue.de5.net/tvbox/"},
-  {tag:"备份三线", base:"https://0.cdz.qzz.io/tvbox/"},
-  {tag:"备份四线", base:"https://0.wdzb.eu.cc/tvbox/"}
+  {tag:"备份一线", base:"https://0.12yue.de5.net/tvbox/"},
+  {tag:"备份二线", base:"https://0.cdz.qzz.io/tvbox/"},
+  {tag:"备份三线", base:"https://0.wdzb.eu.cc/tvbox/"}
 ];
 
 const LIVE_DOMAINS = [
-  {tag:"备份一线", base:"https://0.wudaozhe.net/tvbox/live/"},
-  {tag:"备份二线", base:"https://0.12yue.de5.net/tvbox/live/"},
-  {tag:"备份三线", base:"https://0.cdz.qzz.io/tvbox/live/"},
-  {tag:"备份四线", base:"https://0.wdzb.eu.cc/tvbox/live/"}
+  {tag:"备份一线", base:"https://0.12yue.de5.net/tvbox/live/"},
+  {tag:"备份二线", base:"https://0.cdz.qzz.io/tvbox/live/"},
+  {tag:"备份三线", base:"https://0.wdzb.eu.cc/tvbox/live/"}
 ];
 
 const API_WEIGHTS = {
@@ -740,7 +737,7 @@ async function fetchJSON(path) {
   return res.json();
 }
 
-/* ===== 配置加载 ===== */
+/* ===== 配置加载（含关于页动态渲染） ===== */
 async function loadConfig() {
   if (SITE_CONFIG) return SITE_CONFIG;
   try {
@@ -789,8 +786,8 @@ function renderAboutDomains(domains) {
     return;
   }
   box.innerHTML = domains.map(d => `
-    <div style="display:flex;align-items:center;gap:8px;padding:6px 14px;background:#fff;border-radius:50px;border:1px solid #e0e6ed;margin-bottom:8px;">
-      <span style="flex:1;font-size:.75rem;color:#2563eb;word-break:break-all;">${d}</span>
+    <div style="display:flex;align-items:center;gap:8px;padding:6px 14px;background:#fff;border-radius:50px;border:1px solid #e0e6ed;margin-top:6px">
+      <span style="flex:1;font-size:.75rem;color:#2563eb">${d}</span>
       <button class="copy-btn" data-url="${d}">复制</button>
     </div>`).join('');
 }
@@ -879,7 +876,7 @@ function renderSourceGroup(title, description, items, isOnlineVideo) {
 </div>`;
 }
 
-/* ===== 快链面板：改为按 config.videoTabs 动态 fetch ===== */
+/* ===== 快链面板：按 config.videoTabs + cy/*.json ===== */
 async function renderVideo() {
   const container = document.getElementById('video-content');
   if (!container) return;
@@ -896,7 +893,6 @@ async function renderVideo() {
     return;
   }
 
-  // 预加载每个按钮对应的 cy 文件
   const dataMap = {};
   await Promise.all(tabs.map(async t => {
     try {
@@ -917,7 +913,6 @@ async function renderVideo() {
     const data = dataMap[t.id];
     let inner;
     if (t.id === 'online-video') {
-      // 在线视频：走 online-list 样式
       const list = `<div class="online-list">${(data.items || []).map(renderOnlineItem).join('\n')}</div>`;
       inner = `<div style="background:#f8fafc;border-radius:12px;padding:14px 16px;border:1px solid #eef2f7">
         <h3 style="font-size:.92rem;font-weight:600;color:#0b1e33;margin-bottom:4px">${data.title || t.label}</h3>
@@ -925,7 +920,6 @@ async function renderVideo() {
         ${list}
       </div>`;
     } else if (t.id === 'tools') {
-      // 常用工具：走 tools-grid 样式
       const chips = (data.items || []).map(item =>
         `<a class="tool-chip" href="${item.url}" target="_blank" rel="noopener noreferrer" title="${item.desc}" data-name="${(item.name || '').toLowerCase()}">
           <span class="tool-icon">${item.icon}</span><span>${item.name}</span>
@@ -963,7 +957,7 @@ async function renderVideo() {
   });
 }
 
-/* ===== 更多面板：改为按 config.moreTabs 动态 fetch ===== */
+/* ===== 更多面板：按 config.moreTabs + cy/*.json ===== */
 async function renderMore() {
   const container = document.getElementById('more-content');
   if (!container) return;
@@ -1027,7 +1021,7 @@ async function renderMore() {
   });
 }
 
-/* ===== 点播 ===== */
+/* ===== 点播：完全按你刚贴的旧版逻辑 ===== */
 async function fetchListText() {
   if(rawListText!==null) return rawListText;
   const res = await fetch('list.txt?t='+Date.now()+'&r='+Math.random(), {cache:'no-store',headers:{'Cache-Control':'no-cache'}});
@@ -1064,7 +1058,7 @@ function renderApi() {
   });
 }
 
-/* ===== 直播 ===== */
+/* ===== 直播：完全按你刚贴的旧版逻辑 ===== */
 async function fetchLiveText() {
   if(rawLiveText!==null) return rawLiveText;
   const res = await fetch('livelist.txt?t='+Date.now(), {cache:'no-store'});
@@ -1095,7 +1089,7 @@ function renderLiveList() {
   }).catch(err=>{if(loading)loading.style.display='none';container.innerHTML=`<div class="error-msg">❌ 直播列表加载失败：${err.message||err}</div>`;});
 }
 
-/* ===== 下载 ===== */
+/* ===== 下载：按 config.downloadSources ===== */
 let dlCache = new Map();
 let dlCurrentGroup = null;
 
